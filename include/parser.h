@@ -66,6 +66,10 @@ private:
   ParseTree parseFromClause();
   ParseTree parseWhereClause();
   ParseTree parseCondition();
+  ParseTree parseInsert();
+  ParseTree parseUpdate();
+  ParseTree parseDelete();
+  ParseTree parseValueList();
 
   // Utility
   Token consume(TokenType type, const std::string &message);

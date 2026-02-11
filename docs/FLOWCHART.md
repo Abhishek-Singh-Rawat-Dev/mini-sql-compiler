@@ -2,22 +2,21 @@
 
 ## Problem Statement
 
-Design and implement a **Mini SQL Compiler** that validates SQL SELECT queries by simulating the core phases of a compiler. The compiler should:
+Design and implement a **Mini SQL Compiler** that validates and executes SQL queries by simulating the core phases of a compiler. The compiler should:
 
 1. **Tokenize** SQL queries into meaningful tokens (keywords, identifiers, operators)
 2. **Parse** the token stream to verify grammatical correctness
 3. **Validate** semantic correctness (table/column existence)
-4. **Report** meaningful errors with precise location information
-5. **Generate** a Parse Tree as intermediate representation
+4. **Execute** validated queries against in-memory data store
+5. **Report** meaningful errors with precise location information
+6. **Generate** a Parse Tree as intermediate representation
 
-**Scope:** The compiler validates queries without executing them on a real database.
-
-**Supported SQL Subset:**
+**Supported SQL:**
 ```sql
-SELECT column1, column2, ... | *
-FROM table_name
-[WHERE column operator value]
-;
+SELECT col1, col2 | * FROM table [WHERE condition];
+INSERT INTO table (col1, col2) VALUES (val1, val2);
+UPDATE table SET col = value [WHERE condition];
+DELETE FROM table [WHERE condition];
 ```
 
 ---
@@ -104,6 +103,53 @@ flowchart TD
     style S fill:#ffcdd2
 ```
 
+> **Note:** After Phase 3 (Semantic Analysis), the compiler now proceeds to **Phase 4 (Execution)**, which runs validated queries against the in-memory DataStore and returns actual results.
+
+---
+
+## Execution Phase Flow (Phase 4)
+
+```mermaid
+flowchart TD
+    subgraph Input
+        A["Validated Parse Tree"]
+    end
+    
+    subgraph Executor["PHASE 4: QUERY EXECUTION"]
+        B{"Query Type?"}
+        C["executeSelect()"]
+        D["executeInsert()"]
+        E["executeUpdate()"]
+        F["executeDelete()"]
+    end
+    
+    subgraph DataStore["In-Memory DataStore"]
+        G["employees (8 rows)"]
+        H["departments (4 rows)"]
+        I["users (5 rows)"]
+        J["products (5 rows)"]
+    end
+    
+    subgraph Output
+        K["Result Table"]
+        L["Affected Row Count"]
+    end
+    
+    A --> B
+    B -->|SELECT| C
+    B -->|INSERT| D
+    B -->|UPDATE| E
+    B -->|DELETE| F
+    
+    C --> G --> K
+    D --> G --> L
+    E --> G --> L
+    F --> G --> L
+    
+    style K fill:#c8e6c9
+    style L fill:#c8e6c9
+```
+
 ---
 
 ## Detailed Phase Flow
@@ -152,22 +198,32 @@ flowchart TD
         D["parseFromClause()"]
         E["parseWhereClause()"]
         F["parseCondition()"]
+        G["parseInsert()"]
+        H["parseUpdate()"]
+        I["parseDelete()"]
     end
     
-    subgraph Tree["Parse Tree"]
-        T1["QUERY"]
+    subgraph Tree["Parse Tree Node Types"]
+        T1["QUERY / INSERT_QUERY / UPDATE_QUERY / DELETE_QUERY"]
         T2["SELECT_CLAUSE"]
         T3["COLUMN_LIST"]
         T4["FROM_CLAUSE"]
         T5["TABLE_NAME"]
+        T6["SET_CLAUSE"]
+        T7["VALUE_LIST"]
     end
     
-    A --> B --> C
+    A -->|SELECT| B --> C
+    A -->|INSERT| G
+    A -->|UPDATE| H
+    A -->|DELETE| I
     A --> D --> T4 --> T5
     A --> E --> F
     
     T1 --> T2 --> T3
     T1 --> T4
+    T1 --> T6
+    T1 --> T7
 ```
 
 ### Phase 3: Semantic Analysis
@@ -219,6 +275,7 @@ flowchart LR
         L["Lexer<br/>(Member 1)"]
         P["Parser<br/>(Member 2)"]
         S["Semantic<br/>(Member 3)"]
+        X["Executor<br/>(Member 4)"]
         E["Error Handler<br/>(Member 4)"]
     end
     
@@ -226,7 +283,8 @@ flowchart LR
         O1["Token Stream"]
         O2["Parse Tree"]
         O3["Validation Result"]
-        O4["Error Report"]
+        O4["Query Results"]
+        O5["Error Report"]
     end
     
     U -->|SQL Query| L
@@ -234,13 +292,14 @@ flowchart LR
     L -.->|Lexical Errors| E
     P -->|Parse Tree| S
     P -.->|Syntax Errors| E
-    S -->|Result| E
+    S -->|Validated Tree| X
     S -.->|Semantic Errors| E
+    X -->|Results| O4
     
     L --> O1
     P --> O2
     S --> O3
-    E --> O4
+    E --> O5
 ```
 
 ---
@@ -281,4 +340,5 @@ flowchart TD
 | Lexical | Character stream | Token stream | Pattern matching |
 | Syntax | Token stream | Parse tree | Recursive descent |
 | Semantic | Parse tree | Validation result | Symbol table lookup |
+| Execution | Validated tree + DataStore | Query results | Data operations |
 | Output | All results | Final report | Error aggregation |

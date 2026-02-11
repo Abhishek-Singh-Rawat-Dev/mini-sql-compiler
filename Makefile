@@ -58,16 +58,19 @@ demo: $(TARGET)
 
 # Run test queries  
 test: $(TARGET)
-	@echo "=== Testing Valid Query 1 ==="
+	@echo "=== Testing Valid SELECT * ==="
 	@echo "SELECT * FROM employees;" | ./$(TARGET)
 	@echo ""
-	@echo "=== Testing Valid Query 2 ==="
-	@echo "SELECT name, age FROM users WHERE age > 25;" | ./$(TARGET)
+	@echo "=== Testing SELECT with WHERE ==="
+	@echo "SELECT name, age FROM employees WHERE age > 30;" | ./$(TARGET)
 	@echo ""
-	@echo "=== Testing Invalid Query (Syntax Error) ==="
+	@echo "=== Testing INSERT ==="
+	@echo "INSERT INTO employees (id, name, age, salary, department) VALUES (10, 'Test User', 25, 45000, 'QA');" | ./$(TARGET)
+	@echo ""
+	@echo "=== Testing Syntax Error ==="
 	@echo "SELECT * employees;" | ./$(TARGET)
 	@echo ""
-	@echo "=== Testing Invalid Query (Semantic Error) ==="
+	@echo "=== Testing Semantic Error ==="
 	@echo "SELECT * FROM nonexistent;" | ./$(TARGET)
 
 # Clean build artifacts
@@ -88,5 +91,9 @@ help:
 	@echo "  make clean  - Remove build artifacts"
 	@echo "  make help   - Show this help message"
 
+# Create data directory for CSV persistence
+data:
+	@mkdir -p data
+
 # Phony targets
-.PHONY: all run demo test clean help
+.PHONY: all run demo test clean help data

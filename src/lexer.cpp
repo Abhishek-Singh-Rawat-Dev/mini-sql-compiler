@@ -40,7 +40,15 @@ std::unordered_map<std::string, TokenType> Lexer::keywords = {
     {"FROM", TokenType::KEYWORD_FROM},
     {"WHERE", TokenType::KEYWORD_WHERE},
     {"AND", TokenType::KEYWORD_AND},
-    {"OR", TokenType::KEYWORD_OR}};
+    {"OR", TokenType::KEYWORD_OR},
+    {"INSERT", TokenType::KEYWORD_INSERT},
+    {"INTO", TokenType::KEYWORD_INTO},
+    {"VALUES", TokenType::KEYWORD_VALUES},
+    {"UPDATE", TokenType::KEYWORD_UPDATE},
+    {"SET", TokenType::KEYWORD_SET},
+    {"DELETE", TokenType::KEYWORD_DELETE},
+    {"CREATE", TokenType::KEYWORD_CREATE},
+    {"TABLE", TokenType::KEYWORD_TABLE}};
 
 // Constructor
 Lexer::Lexer(const std::string &source)
@@ -108,14 +116,36 @@ void Lexer::scanToken() {
   case ';':
     addToken(TokenType::OP_SEMICOLON);
     break;
+  case '(':
+    addToken(TokenType::OP_LPAREN);
+    break;
+  case ')':
+    addToken(TokenType::OP_RPAREN);
+    break;
   case '=':
     addToken(TokenType::OP_EQUALS);
     break;
+  case '!':
+    if (match('=')) {
+      addToken(TokenType::OP_NOT_EQUALS, "!=");
+    } else {
+      std::string msg = "Unexpected character '!', did you mean '!='?";
+      reportError(msg);
+    }
+    break;
   case '<':
-    addToken(TokenType::OP_LESS_THAN);
+    if (match('=')) {
+      addToken(TokenType::OP_LESS_EQUALS, "<=");
+    } else {
+      addToken(TokenType::OP_LESS_THAN);
+    }
     break;
   case '>':
-    addToken(TokenType::OP_GREATER_THAN);
+    if (match('=')) {
+      addToken(TokenType::OP_GREATER_EQUALS, ">=");
+    } else {
+      addToken(TokenType::OP_GREATER_THAN);
+    }
     break;
 
   // String literals

@@ -56,7 +56,24 @@ bool SemanticAnalyzer::analyze(const ParseTree &tree) {
     return false;
   }
 
-  validateQuery(tree);
+  // Dispatch based on query type
+  switch (tree->type) {
+  case NodeType::QUERY:
+    validateQuery(tree);
+    break;
+  case NodeType::INSERT_QUERY:
+    validateInsert(tree);
+    break;
+  case NodeType::UPDATE_QUERY:
+    validateUpdate(tree);
+    break;
+  case NodeType::DELETE_QUERY:
+    validateDelete(tree);
+    break;
+  default:
+    reportError("Unknown query type for semantic analysis");
+    break;
+  }
 
   if (errors.empty()) {
     std::cout << "Semantic Analysis: SUCCESS\n";
@@ -262,6 +279,102 @@ void SemanticAnalyzer::validateColumn(const std::string &columnName, int line,
   } else {
     std::cout << "Column '" << columnName << "' validated in table '"
               << currentTable << "'.\n";
+  }
+}
+
+// ============================================================================
+// INSERT VALIDATION
+// ============================================================================
+void SemanticAnalyzer::validateInsert(const ParseTree &node) {
+  std::string tableName;
+  std::vector<std::string> columns;
+  int valueCount = 0;
+
+  for (const auto &child : node->children) {
+    if (child->type == NodeType::TABLE_NAME) {
+      tableName = child->value;
+      std::string lowerTable = tableName;
+      std::transform(lowerTable.begin(), lowerTable.end(), lowerTable.begin(),
+                     ::tolower);
+
+      if (!symbolTable.tableExists(lowerTable)) {
+        std::string msg = "Table '" + tableName + "' does not exist.";
+        reportError(msg);
+        return;
+      }
+      currentTable = lowerTable;
+      std::cout << "Table '" << tableName << "' validated for INSERT.\n";
+    } else if (child->type == NodeType::COLUMN_LIST) {
+      for (const auto &col : child->children) {
+        if (col->type == NodeType::COLUMN) {
+          columns.push_back(col->value);
+          validateColumn(col->value, 1, 1);
+        }
+      }
+    } else if (child->type == NodeType::VALUE_LIST) {
+      for (const auto &val : child->children) {
+        if (val->type == NodeType::VALUE) {
+          valueCount++;
+        }
+      }
+    }
+  }
+
+  // Check column count matches value count
+  if (!columns.empty() && valueCount > 0 &&
+      columns.size() != static_cast<size_t>(valueCount)) {
+    reportError("Column count (" + std::to_string(columns.size()) +
+                ") does not match value count (" + std::to_string(valueCount) +
+                ")");
+  }
+}
+
+// ============================================================================
+// UPDATE VALIDATION
+// ============================================================================
+void SemanticAnalyzer::validateUpdate(const ParseTree &node) {
+  for (const auto &child : node->children) {
+    if (child->type == NodeType::TABLE_NAME) {
+      std::string tableName = child->value;
+      std::string lowerTable = tableName;
+      std::transform(lowerTable.begin(), lowerTable.end(), lowerTable.begin(),
+                     ::tolower);
+
+      if (!symbolTable.tableExists(lowerTable)) {
+        std::string msg = "Table '" + tableName + "' does not exist.";
+        reportError(msg);
+        return;
+      }
+      currentTable = lowerTable;
+      std::cout << "Table '" << tableName << "' validated for UPDATE.\n";
+    } else if (child->type == NodeType::SET_CLAUSE) {
+      for (const auto &assign : child->children) {
+        if (assign->type == NodeType::ASSIGNMENT) {
+          for (const auto &ac : assign->children) {
+            if (ac->type == NodeType::COLUMN) {
+              validateColumn(ac->value, 1, 1);
+            }
+          }
+        }
+      }
+    } else if (child->type == NodeType::WHERE_CLAUSE) {
+      validateWhereClause(child);
+    }
+  }
+}
+
+// ============================================================================
+// DELETE VALIDATION
+// ============================================================================
+void SemanticAnalyzer::validateDelete(const ParseTree &node) {
+  for (const auto &child : node->children) {
+    if (child->type == NodeType::FROM_CLAUSE) {
+      validateFromClause(child);
+    } else if (child->type == NodeType::WHERE_CLAUSE) {
+      if (!currentTable.empty()) {
+        validateWhereClause(child);
+      }
+    }
   }
 }
 

@@ -50,6 +50,9 @@ private:
   void validateWhereClause(const ParseTree &node);
   void validateCondition(const ParseTree &node);
   void validateColumn(const std::string &columnName, int line, int col);
+  void validateInsert(const ParseTree &node);
+  void validateUpdate(const ParseTree &node);
+  void validateDelete(const ParseTree &node);
 
   // Error reporting
   void reportError(const std::string &message, int line = 1, int col = 1);

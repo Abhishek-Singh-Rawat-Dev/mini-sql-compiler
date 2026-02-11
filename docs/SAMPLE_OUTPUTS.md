@@ -393,14 +393,156 @@ Goodbye!
 
 ---
 
+## 8. INSERT Query Execution
+
+### Input
+```sql
+INSERT INTO employees (id, name, age, salary, department) VALUES (9, 'Kavita Joshi', 31, 68000, 'Sales');
+```
+
+### Console Output (Key Phases)
+```
+========================================
+   PHASE 2: SYNTAX ANALYSIS
+========================================
+Syntax Analysis: SUCCESS
+
+--- Parse Tree (Intermediate Representation) ---
+|-- INSERT_QUERY
+  |-- TABLE_NAME: "employees"
+  |-- COLUMN_LIST
+    |-- COLUMN: "id"
+    |-- COLUMN: "name"
+    |-- COLUMN: "age"
+    |-- COLUMN: "salary"
+    |-- COLUMN: "department"
+  |-- VALUE_LIST
+    |-- VALUE: "9"
+    |-- VALUE: "Kavita Joshi"
+    |-- VALUE: "31"
+    |-- VALUE: "68000"
+    |-- VALUE: "Sales"
+
+========================================
+   PHASE 3: SEMANTIC ANALYSIS
+========================================
+Table 'employees' validated for INSERT.
+Column 'id' validated in table 'employees'.
+Column 'name' validated in table 'employees'.
+Column 'age' validated in table 'employees'.
+Column 'salary' validated in table 'employees'.
+Column 'department' validated in table 'employees'.
+Semantic Analysis: SUCCESS
+
+========================================
+   PHASE 4: QUERY EXECUTION
+========================================
+Execution: SUCCESS
+1 row inserted successfully.
+```
+
+---
+
+## 9. UPDATE Query Execution
+
+### Input
+```sql
+UPDATE employees SET salary = 100000 WHERE id = 3;
+```
+
+### Console Output (Key Phases)
+```
+--- Parse Tree ---
+|-- UPDATE_QUERY
+  |-- TABLE_NAME: "employees"
+  |-- SET_CLAUSE: "SET"
+    |-- ASSIGNMENT
+      |-- COLUMN: "salary"
+      |-- VALUE: "100000"
+  |-- WHERE_CLAUSE: "WHERE"
+    |-- CONDITION
+      |-- COLUMN: "id"
+      |-- OPERATOR: "="
+      |-- VALUE: "3"
+
+========================================
+   PHASE 4: QUERY EXECUTION
+========================================
+Execution: SUCCESS
+1 row(s) updated successfully.
+```
+
+---
+
+## 10. DELETE Query Execution
+
+### Input
+```sql
+DELETE FROM employees WHERE id = 1;
+```
+
+### Console Output (Key Phases)
+```
+--- Parse Tree ---
+|-- DELETE_QUERY
+  |-- FROM_CLAUSE: "FROM"
+    |-- TABLE_NAME: "employees"
+  |-- WHERE_CLAUSE: "WHERE"
+    |-- CONDITION
+      |-- COLUMN: "id"
+      |-- OPERATOR: "="
+      |-- VALUE: "1"
+
+========================================
+   PHASE 4: QUERY EXECUTION
+========================================
+Execution: SUCCESS
+1 row(s) deleted successfully.
+```
+
+---
+
+## 11. SELECT with Result Table
+
+### Input
+```sql
+SELECT name, salary FROM employees WHERE salary > 70000;
+```
+
+### Console Output (Execution Phase)
+```
+========================================
+   PHASE 4: QUERY EXECUTION
+========================================
+Execution: SUCCESS
+Query executed successfully. 5 row(s) returned.
+
+--- Query Results ---
++----------------+----------+
+| name           | salary   |
++----------------+----------+
+| Priya Patel    | 72000    |
+| Amit Kumar     | 95000    |
+| Vikram Singh   | 82000    |
+| Rajesh Nair    | 88000    |
+| Deepa Iyer     | 75000    |
++----------------+----------+
+5 row(s) in set
+```
+
+---
+
 ## Summary of Test Cases
 
-| # | Query | Expected Result | Actual Result |
-|---|-------|-----------------|---------------|
-| 1 | `SELECT * FROM employees;` | VALID | ✅ PASSED |
-| 2 | `SELECT name, age FROM users WHERE age > 25;` | VALID | ✅ PASSED |
-| 3 | `SELECT * employees;` | SYNTAX ERROR | ✅ DETECTED |
-| 4 | `SELECT @ FROM users;` | LEXICAL ERROR | ✅ DETECTED |
-| 5 | `SELECT * FROM customers;` | SEMANTIC ERROR | ✅ DETECTED |
-| 6 | `SELECT invalid FROM employees;` | SEMANTIC ERROR | ✅ DETECTED |
-| 7 | `SELECT * FROM users` | SYNTAX ERROR (no ;) | ✅ DETECTED |
+| # | Query | Type | Expected Result | Actual Result |
+|---|-------|------|-----------------|---------------|
+| 1 | `SELECT * FROM employees;` | SELECT | VALID + 8 rows | ✅ PASSED |
+| 2 | `SELECT name, salary FROM employees WHERE salary > 70000;` | SELECT | VALID + 5 rows | ✅ PASSED |
+| 3 | `SELECT username, email FROM users WHERE age > 25;` | SELECT | VALID + 5 rows | ✅ PASSED |
+| 4 | `INSERT INTO employees (id, name, ...) VALUES (...);` | INSERT | 1 row inserted | ✅ PASSED |
+| 5 | `UPDATE employees SET salary = 100000 WHERE id = 3;` | UPDATE | 1 row updated | ✅ PASSED |
+| 6 | `DELETE FROM employees WHERE id = 1;` | DELETE | 1 row deleted | ✅ PASSED |
+| 7 | `SELECT * employees;` | ERROR | SYNTAX ERROR | ✅ DETECTED |
+| 8 | `SELECT @ FROM users;` | ERROR | LEXICAL ERROR | ✅ DETECTED |
+| 9 | `SELECT * FROM customers;` | ERROR | SEMANTIC ERROR | ✅ DETECTED |
+| 10 | `SELECT invalid FROM employees;` | ERROR | SEMANTIC ERROR | ✅ DETECTED |
